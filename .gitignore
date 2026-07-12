@@ -1,5 +1,3 @@
-# .gitignore
-
 # environment variables — NEVER push this
 .env
 
