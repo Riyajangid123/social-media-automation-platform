@@ -1,13 +1,18 @@
 FROM python:3.11-slim
 
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 WORKDIR /app
 
-COPY requirements.txt .
+# Copy dependency files first (for Docker layer caching)
+COPY pyproject.toml uv.lock ./
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies
+RUN uv sync --frozen --no-dev
 
+# Copy the project
 COPY . .
 
-EXPOSE 8501
-
-CMD ["streamlit", "run", "dashboard/ui.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Render provides PORT
+CMD ["sh", "-c", "uv run uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
