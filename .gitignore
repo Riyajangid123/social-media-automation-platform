@@ -1,0 +1,32 @@
+# .gitignore
+
+# environment variables — NEVER push this
+.env
+
+# python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# virtual environment
+.venv/
+venv/
+
+# RAG database
+rag_db/
+
+# scheduled posts queue
+scheduled_tweets.json
+scheduled_posts.json
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
