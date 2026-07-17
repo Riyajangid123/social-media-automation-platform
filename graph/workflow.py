@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.postgres import PostgresSaver
 from graph.state import GraphState
 from agents.rag_agent import RagAgent
 from agents.superviser_agent import SupervisorAgent
@@ -8,15 +8,15 @@ from agents.twitter_agent import TwitterAgent
 from agents.reviewer_agent import ReviewerAgent
 from agents.human_approval_agent import HumanApprovalAgent
 from agents.publisher_agent import PublisherAgent
-from agents.instagram_agent import InstagramAgent
 from agents.linkedin_agent import LinkedInAgent
 import json
+import os
+
 
 rag_agent            = RagAgent()
 supervisor_agent     = SupervisorAgent()
 research_agent       = ResearchAgent()
 twitter_agent        = TwitterAgent()
-instagram_agent      = InstagramAgent()
 linkedin_agent       = LinkedInAgent()
 reviewer_agent       = ReviewerAgent()
 human_approval_agent = HumanApprovalAgent()
@@ -117,7 +117,6 @@ def build_graph():
     graph.add_node("supervisor_node",     supervisor_agent.supervisor)
     graph.add_node("research_node",       research_agent.research)
     graph.add_node("twitter_node",        twitter_agent.generate)
-    graph.add_node("instagram_node",      instagram_agent.generate)
     graph.add_node("linkedin_node",       linkedin_agent.linkedin_generate)
     graph.add_node("reviewer_node",       reviewer_agent.review)
     graph.add_node("human_approval_node", human_approval_agent.approve)
@@ -130,11 +129,9 @@ def build_graph():
     graph.add_edge("supervisor_node", "research_node")
     
     graph.add_edge("research_node",  "twitter_node")
-    graph.add_edge("research_node",  "instagram_node")
     graph.add_edge("research_node",  "linkedin_node")
     
     graph.add_edge("twitter_node",   "reviewer_node")
-    graph.add_edge("instagram_node", "reviewer_node")
     graph.add_edge("linkedin_node",  "reviewer_node")
 
     graph.add_conditional_edges(
@@ -143,7 +140,6 @@ def build_graph():
         {
             "human_approval": "human_approval_node",
             "twitter": "twitter_node",
-            "instagram": "instagram_node",
             "linkedin": "linkedin_node",
         }
     )
@@ -154,7 +150,6 @@ def build_graph():
         {
             "finalize": "finalize_node",
             "twitter": "twitter_node",
-            "instagram": "instagram_node",
             "linkedin": "linkedin_node",
             "end": END
         }
@@ -163,7 +158,10 @@ def build_graph():
     graph.add_edge("finalize_node", "publisher_node")
     graph.add_edge("publisher_node", END)
 
-    checkpointer = MemorySaver()
+    DB_URI=os.getenv('DATABASE_URL')
+    checkpointer=PostgresSaver.from_conn_string(DB_URI)
+
+    checkpointer.setup()
 
     return graph.compile(
         checkpointer=checkpointer,

@@ -1,0 +1,9 @@
+.git
+.gitignore
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints
+.env
+*.log
+node_modules/
